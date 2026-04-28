@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
 // --- Dashboard Component ---
-const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpdate }) => (
+const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpdate, onAddEmployee }) => (
   <main className="p-4 sm:p-8">
     {/* Title */}
     <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
@@ -108,7 +108,10 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
       })}
 
       {/* Add Card */}
-      <div className="border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center min-h-45 hover:border-blue-500 hover:bg-indigo-50 cursor-pointer">
+      <div
+        onClick={onAddEmployee}
+        className="border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center min-h-45 hover:border-blue-500 hover:bg-indigo-50 cursor-pointer transition"
+      >
         <p className="text-gray-400 font-semibold">+ Add Employee</p>
       </div>
     </div>
@@ -355,6 +358,7 @@ export default function PaySphereDashboard() {
             filtered={filtered} 
             getInitials={getInitials} 
             onAddUpdate={() => navigate("/monthly-updates")}
+            onAddEmployee={() => navigate("/add-employee")}
           />
         ) : (
           <EmployeeManagement />
