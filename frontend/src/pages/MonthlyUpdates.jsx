@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import axios from "axios";
+import API_BASE_URL from "../utils/api";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const PayrollIcon = () => (
@@ -102,12 +104,19 @@ const EditIcon2 = () => (
 );
 
 // ── Avatar ─────────────────────────────────────────────────────────────────
+const AVATAR_COLORS = ["#6366F1", "#EC4899", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6"];
+
+const getAvatarColor = (name) => {
+  const idx = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+};
+
 const Avatar = ({ name, color, size = 42 }) => {
   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: color,
+      background: color || getAvatarColor(name),
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: size * 0.34, fontWeight: 700, color: "white", flexShrink: 0,
     }}>{initials}</div>
@@ -122,37 +131,41 @@ const QUICK_ACTIONS = [
   { label: "Add Deduction", icon: <ScissorsIcon />, template: " has ₹X deduction" },
 ];
 
-// ── Initial activity ───────────────────────────────────────────────────────
-const INIT_ACTIVITY = [
-  {
-    id: 1, name: "Ravi Kumar", color: "#6366F1", pending: false,
-    tags: [
-      { label: "– 2 days leave",    bg: "#FEF2F2", color: "#DC2626" },
-      { label: "+ 5 hours overtime", bg: "#EFF6FF", color: "#2563EB" },
-    ],
-    note: null,
-  },
-  {
-    id: 2, name: "Ananya Singh", color: "#EC4899", pending: false,
-    tags: [
-      { label: "+ ₹3,000 bonus", bg: "#F0FDF4", color: "#16A34A" },
-    ],
-    note: '"Performance Incentive"',
-  },
-  {
-    id: 3, name: "Vikram Malhotra", color: "#F59E0B", pending: true,
-    tags: [
-      { label: "– ₹1,200 deduction", bg: "#FEF2F2", color: "#DC2626" },
-    ],
-    note: '"Unpaid Absence"',
-  },
-];
+// No initial hardcoded activity — starts empty, populated by user input
 
-// ── Parse natural language input (simple) ─────────────────────────────────
-function parseInput(text) {
+// ── Parse natural language input (matches against real employees) ──────────
+function parseInput(text, employeeList = []) {
   const lower = text.toLowerCase();
-  const nameMatch = text.match(/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)/);
-  const name = nameMatch ? nameMatch[1] : "Employee";
+
+  // Try to match the input against actual employee names
+  let name = null;
+
+  // 1. Try full name match (case-insensitive): "Ravi Kumar took..." → "Ravi Kumar"
+  for (const emp of employeeList) {
+    if (lower.startsWith(emp.fullName.toLowerCase())) {
+      name = emp.fullName;
+      break;
+    }
+  }
+
+  // 2. Try first-name match: "Ravi took..." → matches "Ravi Kumar"
+  if (!name) {
+    for (const emp of employeeList) {
+      const firstName = emp.fullName.split(" ")[0].toLowerCase();
+      // Check if input starts with the first name followed by a space or action word
+      if (lower.startsWith(firstName + " ")) {
+        name = emp.fullName;
+        break;
+      }
+    }
+  }
+
+  // 3. Fallback: try the old regex for any capitalized name
+  if (!name) {
+    const nameMatch = text.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)/);
+    name = nameMatch ? nameMatch[1] : "Unknown";
+  }
+
   const tags = [];
   const leaveMatch = lower.match(/(\d+)\s*day[s]?\s*leave/);
   if (leaveMatch) tags.push({ label: `– ${leaveMatch[1]} day${leaveMatch[1]>1?"s":""} leave`, bg: "#FEF2F2", color: "#DC2626" });
@@ -173,9 +186,34 @@ export default function MonthlyUpdates() {
   const [activePage, setActivePage]   = useState("employees");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [input, setInput]             = useState("");
-  const [activity, setActivity]       = useState(INIT_ACTIVITY);
-  const [nextId, setNextId]           = useState(10);
+  const [activity, setActivity]       = useState([]);
+  const [nextId, setNextId]           = useState(1);
+  const [employees, setEmployees]     = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
+  const [finalizing, setFinalizing]   = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [payrollResults, setPayrollResults] = useState(null);
+  const [finalizeError, setFinalizeError] = useState("");
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
+  const token = localStorage.getItem("token");
+
+  // Fetch real employees from API
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/employees`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEmployees(res.data.employees);
+      } catch (err) {
+        console.error("Failed to fetch employees:", err);
+      } finally {
+        setLoadingEmployees(false);
+      }
+    };
+    if (token) fetchEmployees();
+    else setLoadingEmployees(false);
+  }, [token]);
 
   const getCompInitials = (name) =>
     name
@@ -187,7 +225,7 @@ export default function MonthlyUpdates() {
 
   const handleSubmit = () => {
     if (!input.trim()) return;
-    const parsed = parseInput(input.trim());
+    const parsed = parseInput(input.trim(), employees);
     const color = COLORS[nextId % COLORS.length];
     setActivity(prev => [{ ...parsed, id: nextId, color }, ...prev]);
     setNextId(n => n + 1);
@@ -203,6 +241,38 @@ export default function MonthlyUpdates() {
   };
 
   const pendingCount = activity.filter(a => a.pending).length;
+
+  const fmt = (n) => "₹" + Math.abs(n).toLocaleString("en-IN");
+
+  // Finalize payroll
+  const handleFinalize = async () => {
+    if (activity.length === 0) return;
+    setFinalizing(true);
+    setFinalizeError("");
+
+    try {
+      const now = new Date();
+      const res = await axios.post(
+        `${API_BASE_URL}/api/payroll/finalize`,
+        {
+          activities: activity.map(a => ({ name: a.name, tags: a.tags })),
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setPayrollResults(res.data);
+      setShowResults(true);
+
+      // Mark all activities as no longer pending
+      setActivity(prev => prev.map(a => ({ ...a, pending: false })));
+    } catch (err) {
+      setFinalizeError(err.response?.data?.message || "Failed to finalize payroll.");
+    } finally {
+      setFinalizing(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#F3F4F6", fontFamily: "'DM Sans','Segoe UI',sans-serif", display: "flex", overflowX: "hidden" }}>
@@ -221,6 +291,8 @@ export default function MonthlyUpdates() {
         .activity-row { display:flex; align-items:center; gap:14px; padding:16px 20px; background:white; border-bottom:1px solid #F0F1F3; transition:background 0.15s; }
         .activity-row:last-child { border-bottom:none; }
         .activity-row:hover { background:#FAFAFA; }
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(4px); }
+        .modal-box { background:white; border-radius:20px; width:92%; max-width:600px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
         
         @media (min-width: 768px) {
           .desktop-ml { margin-left: 236px !important; }
@@ -505,21 +577,21 @@ export default function MonthlyUpdates() {
             {[
               {
                 icon: <TrendIcon />,
-                label: "TOTAL PAYOUT IMPACT",
-                value: "₹1.84L",
-                sub: "+2.4%", subColor: "#16A34A",
+                label: "TOTAL EMPLOYEES",
+                value: loadingEmployees ? "..." : String(employees.length),
+                sub: "On Payroll", subColor: "#9CA3AF",
               },
               {
                 icon: <PersonSlashIcon />,
-                label: "ABSENCE RATE",
-                value: "4.2",
-                sub: "Avg Days", subColor: "#9CA3AF",
+                label: "UPDATES LOGGED",
+                value: String(activity.length),
+                sub: activity.length === 0 ? "None yet" : "This month", subColor: "#9CA3AF",
               },
               {
                 icon: <SpeedoIcon />,
-                label: "DATA COMPLETENESS",
-                value: "92%",
-                sub: "Verified", subColor: "#9CA3AF",
+                label: "PENDING REVIEW",
+                value: String(pendingCount),
+                sub: pendingCount === 0 ? "All clear" : "Needs review", subColor: pendingCount > 0 ? "#F59E0B" : "#16A34A",
               },
             ].map((stat, i) => (
               <div key={i} style={{
@@ -564,22 +636,145 @@ export default function MonthlyUpdates() {
                   Current Batch
                 </div>
                 <div style={{ fontSize:15, fontWeight:700, color:"#111827" }}>
-                  {32 + activity.length - INIT_ACTIVITY.length} Employees Updated
+                  {activity.length} Update{activity.length !== 1 ? "s" : ""} Logged
                 </div>
               </div>
-              <button style={{
-                padding:"13px 28px",
-                background:"#1E3A8A", color:"white",
-                border:"none", borderRadius:12,
-                fontFamily:"'DM Sans',sans-serif",
-                fontSize:15, fontWeight:700, cursor:"pointer",
-                transition:"background 0.15s, transform 0.12s",
-              }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="#1E40AF"; e.currentTarget.style.transform="translateY(-1px)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="#1E3A8A"; e.currentTarget.style.transform="none"; }}
-              >Review &amp; Finalize</button>
+
+              {finalizeError && (
+                <div style={{ fontSize:13, color:"#EF4444", fontWeight:600, maxWidth:240, textAlign:"center" }}>
+                  {finalizeError}
+                </div>
+              )}
+
+              <button
+                onClick={handleFinalize}
+                disabled={finalizing || activity.length === 0}
+                style={{
+                  padding:"13px 28px",
+                  background: activity.length === 0 ? "#9CA3AF" : finalizing ? "#6B7280" : "#1E3A8A",
+                  color:"white",
+                  border:"none", borderRadius:12,
+                  fontFamily:"'DM Sans',sans-serif",
+                  fontSize:15, fontWeight:700,
+                  cursor: activity.length === 0 || finalizing ? "not-allowed" : "pointer",
+                  transition:"background 0.15s, transform 0.12s",
+                  opacity: finalizing ? 0.7 : 1,
+                }}
+                onMouseEnter={e => { if (activity.length > 0 && !finalizing) { e.currentTarget.style.background="#1E40AF"; e.currentTarget.style.transform="translateY(-1px)"; }}}
+                onMouseLeave={e => { if (activity.length > 0 && !finalizing) { e.currentTarget.style.background="#1E3A8A"; e.currentTarget.style.transform="none"; }}}
+              >{finalizing ? "Processing..." : "Review & Finalize"}</button>
             </div>
           </div>
+
+          {/* Payroll Results Modal */}
+          {showResults && payrollResults && (
+            <div className="modal-overlay" onClick={() => setShowResults(false)}>
+              <div className="modal-box" onClick={e => e.stopPropagation()}>
+                {/* Modal Header */}
+                <div style={{ padding:"28px 28px 20px", borderBottom:"1.5px solid #F0F1F3" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                    <h2 style={{
+                      fontFamily:"'DM Serif Display',serif",
+                      fontSize:24, fontWeight:400, color:"#111827",
+                    }}>Payroll Finalized</h2>
+                    <button
+                      onClick={() => setShowResults(false)}
+                      style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, color:"#9CA3AF", padding:8 }}
+                    >✕</button>
+                  </div>
+                  <p style={{ fontSize:14, color:"#6B7280" }}>{payrollResults.message}</p>
+
+                  {payrollResults.errors && payrollResults.errors.length > 0 && (
+                    <div style={{
+                      marginTop:12, padding:"10px 14px", borderRadius:10,
+                      background:"#FEF2F2", border:"1px solid #FECACA",
+                      fontSize:13, color:"#DC2626", fontWeight:500,
+                    }}>
+                      {payrollResults.errors.map((err, i) => (
+                        <div key={i}>⚠ {err}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Results List */}
+                <div style={{ padding:"8px 0" }}>
+                  {payrollResults.results.map((r, i) => (
+                    <div key={i} style={{
+                      padding:"18px 28px",
+                      borderBottom: i < payrollResults.results.length - 1 ? "1px solid #F0F1F3" : "none",
+                    }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+                        <Avatar name={r.employeeName} size={38} />
+                        <div>
+                          <div style={{ fontWeight:700, fontSize:14.5, color:"#111827" }}>{r.employeeName}</div>
+                          <div style={{ fontSize:12, color:"#9CA3AF" }}>Base: {fmt(r.baseSalary)}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:12 }}>
+                        {r.leaveDays > 0 && (
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:13 }}>
+                            <span style={{ color:"#6B7280" }}>{r.leaveDays} day{r.leaveDays > 1 ? "s" : ""} leave</span>
+                            <span style={{ color:"#DC2626", fontWeight:600 }}>- {fmt(r.leaveDeduction)}</span>
+                          </div>
+                        )}
+                        {r.overtimeHours > 0 && (
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:13 }}>
+                            <span style={{ color:"#6B7280" }}>{r.overtimeHours} hr{r.overtimeHours > 1 ? "s" : ""} overtime</span>
+                            <span style={{ color:"#2563EB", fontWeight:600 }}>+ {fmt(r.overtimePay)}</span>
+                          </div>
+                        )}
+                        {r.bonus > 0 && (
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:13 }}>
+                            <span style={{ color:"#6B7280" }}>Bonus</span>
+                            <span style={{ color:"#16A34A", fontWeight:600 }}>+ {fmt(r.bonus)}</span>
+                          </div>
+                        )}
+                        {r.deductions > 0 && (
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:13 }}>
+                            <span style={{ color:"#6B7280" }}>Deductions</span>
+                            <span style={{ color:"#DC2626", fontWeight:600 }}>- {fmt(r.deductions)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{
+                        display:"flex", justifyContent:"space-between", alignItems:"center",
+                        padding:"10px 14px", borderRadius:10,
+                        background:"#EEF2FF",
+                      }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.05em" }}>Net Salary</span>
+                        <span style={{ fontSize:20, fontWeight:700, color:"#2563EB" }}>{fmt(r.netSalary)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Modal Footer */}
+                <div style={{ padding:"16px 28px 24px", borderTop:"1.5px solid #F0F1F3", display:"flex", gap:12, justifyContent:"flex-end" }}>
+                  <button
+                    onClick={() => setShowResults(false)}
+                    style={{
+                      padding:"11px 24px", borderRadius:10,
+                      border:"1.5px solid #E5E7EB", background:"white",
+                      fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600,
+                      color:"#374151", cursor:"pointer",
+                    }}
+                  >Close</button>
+                  <button
+                    onClick={() => { setShowResults(false); navigate("/dashboard"); }}
+                    style={{
+                      padding:"11px 24px", borderRadius:10,
+                      border:"none", background:"#2563EB",
+                      fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:700,
+                      color:"white", cursor:"pointer",
+                    }}
+                  >Go to Dashboard</button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </main>
       </div>

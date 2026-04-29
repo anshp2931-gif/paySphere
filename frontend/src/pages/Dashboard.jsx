@@ -5,137 +5,167 @@ import axios from "axios";
 import API_BASE_URL from "../utils/api";
 
 // --- Dashboard Component ---
-const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpdate, onAddEmployee, totalPayout, employeeCount, loading }) => (
-  <main className="p-4 sm:p-8">
-    {/* Title */}
-    <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
-      <div>
-        <p className="text-sm text-gray-400">Monthly Overview</p>
-        <h1 className="text-3xl sm:text-4xl font-serif text-gray-900">April 2026</h1>
-      </div>
+// --- Dashboard Component ---
+const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpdate, onAddEmployee, totalPayout, employeeCount, loading, payrolls }) => {
+  // Build a map from employeeId to payroll data
+  const payrollMap = {};
+  (payrolls || []).forEach(p => { payrollMap[p.employeeId] = p; });
 
-      <div className="flex gap-3 w-full sm:w-auto">
-        <button className="flex-1 sm:flex-none px-5 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold hover:shadow">
-          Reports
-        </button>
+  const fmt = (n) => "₹" + Math.abs(n).toLocaleString("en-IN");
 
-        <button className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold">
-          Run Payroll
-        </button>
-      </div>
-    </div>
+  return (
+    <main className="p-4 sm:p-8">
+      {/* Title */}
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
+        <div>
+          <p className="text-sm text-gray-400">Monthly Overview</p>
+          <h1 className="text-3xl sm:text-4xl font-serif text-gray-900">April 2026</h1>
+        </div>
 
-    {/* Stats */}
-    <div className="flex flex-col sm:flex-row gap-4 mb-10">
-      <div className="flex-1 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <p className="text-xs uppercase text-gray-400 font-bold mb-2">
-          Total Monthly Payout
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-bold">₹{totalPayout.toLocaleString("en-IN")}</h2>
-        <p className="text-gray-400 text-sm mt-2">{employeeCount} employees on payroll</p>
-      </div>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <button className="flex-1 sm:flex-none px-5 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold hover:shadow">
+            Reports
+          </button>
 
-      <div className="w-full sm:w-64 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <p className="text-xs uppercase text-gray-400 font-bold mb-2">
-          Employees
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-bold">{employeeCount}</h2>
-        <p className="text-gray-400 text-sm">Active this month</p>
-      </div>
-    </div>
-
-    {/* Search */}
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-      <h2 className="text-lg font-bold">Employee Directory</h2>
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search employees..."
-        className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 outline-none"
-      />
-    </div>
-
-    {/* Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      {loading ? (
-        <div className="col-span-full py-16 text-center text-gray-400 text-sm">Loading employees...</div>
-      ) : filtered.length === 0 && !search ? (
-        <div className="col-span-full py-16 text-center">
-          <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
-          <p className="text-gray-400 text-sm mb-4">Add your first employee to get started with payroll.</p>
-          <button
-            onClick={onAddEmployee}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
+          <button 
+            onClick={onAddUpdate}
+            className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold"
           >
-            + Add Employee
+            Run Payroll
           </button>
         </div>
-      ) : filtered.length === 0 && search ? (
-        <div className="col-span-full py-16 text-center text-gray-400 text-sm">No employees match "{search}"</div>
-      ) : (
-        filtered.map((emp) => (
-          <div key={emp._id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col gap-4">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: AVATAR_COLORS[emp.fullName.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length] }}
-                >
-                  {getInitials(emp.fullName)}
-                </div>
+      </div>
 
-                <div>
-                  <p className="font-bold text-sm">{emp.fullName}</p>
-                  <p className="text-xs text-gray-400">{emp.role || "Employee"}</p>
-                </div>
-              </div>
+      {/* Stats */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-10">
+        <div className="flex-1 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <p className="text-xs uppercase text-gray-400 font-bold mb-2">
+            Total Monthly Payout
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold">₹{totalPayout.toLocaleString("en-IN")}</h2>
+          <p className="text-gray-400 text-sm mt-2">{employeeCount} employees on payroll</p>
+        </div>
 
-              <span className="text-xs font-bold px-2 py-1 rounded-md border bg-green-50 text-green-600 border-green-200">
-                Active
-              </span>
-            </div>
+        <div className="w-full sm:w-64 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <p className="text-xs uppercase text-gray-400 font-bold mb-2">
+            Employees
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold">{employeeCount}</h2>
+          <p className="text-gray-400 text-sm">Active this month</p>
+        </div>
+      </div>
 
-            {/* Salary */}
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-400 uppercase">
-                Base Salary
-              </p>
-              <p className="text-lg font-bold">₹{Number(emp.monthlySalary).toLocaleString("en-IN")}</p>
-            </div>
+      {/* Search */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-lg font-bold">Employee Directory</h2>
 
-            {/* Button */}
-            <button 
-              onClick={onAddUpdate}
-              className="border border-gray-200 rounded-lg py-2 text-blue-600 font-semibold hover:bg-indigo-50"
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search employees..."
+          className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 outline-none"
+        />
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {loading ? (
+          <div className="col-span-full py-16 text-center text-gray-400 text-sm">Loading employees...</div>
+        ) : filtered.length === 0 && !search ? (
+          <div className="col-span-full py-16 text-center">
+            <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
+            <p className="text-gray-400 text-sm mb-4">Add your first employee to get started with payroll.</p>
+            <button
+              onClick={onAddEmployee}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
             >
-              + Add Update
+              + Add Employee
             </button>
           </div>
-        ))
-      )}
+        ) : filtered.length === 0 && search ? (
+          <div className="col-span-full py-16 text-center text-gray-400 text-sm">No employees match "{search}"</div>
+        ) : (
+          filtered.map((emp) => {
+            const p = payrollMap[emp._id];
+            return (
+              <div key={emp._id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold"
+                      style={{ backgroundColor: AVATAR_COLORS[emp.fullName.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length] }}
+                    >
+                      {getInitials(emp.fullName)}
+                    </div>
 
-      {/* Add Card - only show when we have employees or not loading */}
-      {!loading && (filtered.length > 0 || search) && (
-        <div
-          onClick={onAddEmployee}
-          className="border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center min-h-45 hover:border-blue-500 hover:bg-indigo-50 cursor-pointer transition"
-        >
-          <p className="text-gray-400 font-semibold">+ Add Employee</p>
-        </div>
-      )}
-    </div>
-  </main>
-);
+                    <div>
+                      <p className="font-bold text-sm">{emp.fullName}</p>
+                      <p className="text-xs text-gray-400">{emp.role || "Employee"}</p>
+                    </div>
+                  </div>
+
+                  <span className={`text-xs font-bold px-2 py-1 rounded-md border ${p ? "bg-green-50 text-green-600 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"}`}>
+                    {p ? "Finalized" : "Pending"}
+                  </span>
+                </div>
+
+                {/* Salary */}
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex justify-between items-baseline">
+                    <p className="text-xs text-gray-400 uppercase">
+                      {p ? "Net Salary" : "Base Salary"}
+                    </p>
+                    {p && (p.leaveDays > 0 || p.overtimeHours > 0) && (
+                      <span className="text-[10px] text-gray-400 font-medium">Incl. adjustments</span>
+                    )}
+                  </div>
+                  <p className="text-lg font-bold">
+                    {fmt(p ? p.netSalary : emp.monthlySalary)}
+                  </p>
+                </div>
+
+                {/* Button */}
+                <button 
+                  onClick={onAddUpdate}
+                  className="border border-gray-200 rounded-lg py-2 text-blue-600 font-semibold hover:bg-indigo-50 transition-colors"
+                >
+                  {p ? "Edit Updates" : "+ Add Update"}
+                </button>
+              </div>
+            );
+          })
+        )}
+
+        {/* Add Card - only show when we have employees or not loading */}
+        {!loading && (filtered.length > 0 || search) && (
+          <div
+            onClick={onAddEmployee}
+            className="border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center min-h-45 hover:border-blue-500 hover:bg-indigo-50 cursor-pointer transition"
+          >
+            <p className="text-gray-400 font-semibold">+ Add Employee</p>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+};
 
 // --- Avatar Colors ---
 const AVATAR_COLORS = ["#6366F1", "#EC4899", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6"];
 
 // --- Employees Component ---
-const EmployeeManagement = ({ employees, loading, onAddEmployee }) => {
+const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, payrolls }) => {
   const fmt = (n) => "₹" + Math.abs(n).toLocaleString("en-IN");
-  const totalNet = employees.reduce((s, e) => s + (e.monthlySalary || 0), 0);
+
+  // Build a map from employeeId to payroll data
+  const payrollMap = {};
+  (payrolls || []).forEach(p => { payrollMap[p.employeeId] = p; });
+
+  const totalNet = employees.reduce((s, e) => {
+    const p = payrollMap[e._id];
+    return s + (p ? p.netSalary : e.monthlySalary || 0);
+  }, 0);
 
   const initials = (name) =>
     name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
@@ -149,7 +179,7 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee }) => {
             Payroll done in 30 seconds
           </span>
 
-          <p className="text-sm text-gray-400 mb-1">April 2026 Final Summary</p>
+          <p className="text-sm text-gray-400 mb-1">Final Summary</p>
 
           <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 mb-2">
             ₹{totalNet.toLocaleString("en-IN")}
@@ -161,7 +191,10 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee }) => {
         </div>
 
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none px-5 py-3 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:shadow">
+          <button
+            onClick={onAddUpdate}
+            className="flex-1 sm:flex-none px-5 py-3 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:shadow"
+          >
             Edit Updates
           </button>
 
@@ -187,56 +220,81 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee }) => {
             </button>
           </div>
         ) : (
-          employees.map(emp => (
-            <div key={emp._id} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-5">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-11 h-11 rounded-full text-white flex items-center justify-center font-bold"
-                    style={{ backgroundColor: AVATAR_COLORS[emp.fullName.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length] }}
-                  >
-                    {initials(emp.fullName)}
+          employees.map(emp => {
+            const p = payrollMap[emp._id];
+
+            return (
+              <div key={emp._id} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-5">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-11 h-11 rounded-full text-white flex items-center justify-center font-bold"
+                      style={{ backgroundColor: AVATAR_COLORS[emp.fullName.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length] }}
+                    >
+                      {initials(emp.fullName)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-gray-900">{emp.fullName}</p>
+                      <p className="text-xs text-gray-400">{emp.role || "Employee"}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm text-gray-900">{emp.fullName}</p>
-                    <p className="text-xs text-gray-400">{emp.role || "Employee"}</p>
-                  </div>
+
+                  <span className={`text-xs font-bold px-2 py-1 rounded-md border ${p ? "bg-green-50 text-green-600 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"}`}>
+                    {p ? "Finalized" : "Pending"}
+                  </span>
                 </div>
 
-                <button className="p-2 rounded-lg hover:bg-indigo-50">
-                  ⬇
-                </button>
-              </div>
-
-              {/* Breakdown */}
-              <div className="space-y-2 text-sm mb-5">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Base Salary</span>
-                  <span className="font-semibold">{fmt(emp.monthlySalary)}</span>
-                </div>
-
-                {emp.overtimeRate > 0 && (
+                {/* Breakdown */}
+                <div className="space-y-2 text-sm mb-5">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Overtime Rate</span>
-                    <span className="font-semibold">{fmt(emp.overtimeRate)}/hr</span>
+                    <span className="text-gray-500">Base Salary</span>
+                    <span className="font-semibold">{fmt(emp.monthlySalary)}</span>
                   </div>
-                )}
-              </div>
 
-              <div className="h-px bg-gray-200 mb-4" />
+                  {p && p.leaveDays > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-red-600">− {p.leaveDays} day{p.leaveDays > 1 ? "s" : ""} leave</span>
+                      <span className="text-red-600 font-semibold">- {fmt(p.leaveDeduction)}</span>
+                    </div>
+                  )}
 
-              {/* Net */}
-              <div className="flex justify-between items-center">
-                <span className="text-xs uppercase text-gray-400 font-bold">
-                  Monthly Salary
-                </span>
-                <span className="text-2xl font-semibold text-blue-600">
-                  {fmt(emp.monthlySalary)}
-                </span>
+                  {p && p.overtimeHours > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-blue-600">+ {p.overtimeHours} hr{p.overtimeHours > 1 ? "s" : ""} overtime</span>
+                      <span className="text-blue-600 font-semibold">+ {fmt(p.overtimePay)}</span>
+                    </div>
+                  )}
+
+                  {p && p.bonus > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-green-600">+ Bonus</span>
+                      <span className="text-green-600 font-semibold">+ {fmt(p.bonus)}</span>
+                    </div>
+                  )}
+
+                  {p && p.deductions > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-red-600">− Deductions</span>
+                      <span className="text-red-600 font-semibold">- {fmt(p.deductions)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-px bg-gray-200 mb-4" />
+
+                {/* Net */}
+                <div className="flex justify-between items-center">
+                  <span className="text-xs uppercase text-gray-400 font-bold">
+                    {p ? "Net Salary" : "Monthly Salary"}
+                  </span>
+                  <span className="text-2xl font-semibold text-blue-600">
+                    {fmt(p ? p.netSalary : emp.monthlySalary)}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Add More */}
@@ -262,28 +320,41 @@ export default function PaySphereDashboard() {
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [payrolls, setPayrolls] = useState([]);
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
-  // Fetch employees from API
+  // Fetch employees and payroll data from API
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/employees`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setEmployees(res.data.employees);
+        const [empRes, payRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/employees`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_BASE_URL}/api/payroll/summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        setEmployees(empRes.data.employees);
+        setPayrolls(payRes.data.payrolls || []);
       } catch (err) {
-        console.error("Failed to fetch employees:", err);
+        console.error("Failed to fetch data:", err);
       } finally {
         setLoading(false);
       }
     };
-    if (token) fetchEmployees();
+    if (token) fetchData();
     else setLoading(false);
   }, [token]);
 
-  const totalPayout = employees.reduce((sum, e) => sum + (e.monthlySalary || 0), 0);
+  const payrollMap = {};
+  payrolls.forEach(p => { payrollMap[p.employeeId] = p; });
+
+  const totalPayout = employees.reduce((sum, e) => {
+    const p = payrollMap[e._id];
+    return sum + (p ? p.netSalary : e.monthlySalary || 0);
+  }, 0);
 
   const filtered = employees.filter(
     (e) =>
@@ -407,9 +478,10 @@ export default function PaySphereDashboard() {
             totalPayout={totalPayout}
             employeeCount={employees.length}
             loading={loading}
+            payrolls={payrolls}
           />
         ) : (
-          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} />
+          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls} />
         )}
 
       </div>
