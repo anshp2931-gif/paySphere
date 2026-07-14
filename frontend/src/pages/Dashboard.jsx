@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import api from "../services/api";
-import { StatCardSkeleton, EmployeeCardSkeleton, EmployeeBreakdownSkeleton } from "../components/common/Skeleton";
+import { useNavigate } from "react-router-dom";
 import EmptyState from "../components/common/EmptyState";
+import { EmployeeBreakdownSkeleton, EmployeeCardSkeleton, StatCardSkeleton } from "../components/common/Skeleton";
+import api from "../services/api";
 
 
 // --- Dashboard Component ---
@@ -175,7 +175,7 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
 const AVATAR_COLORS = ["#6366F1", "#EC4899", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6"];
 
 // --- Employees Component ---
-const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, payrolls }) => {
+const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, payrolls,currentPage,totalPages,setCurrentPage }) => {
   const fmt = (n) => "₹" + Math.abs(n).toLocaleString("en-IN");
 
   // Build a map from employeeId to payroll data
@@ -332,7 +332,32 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, pa
             </p>
           </div>
         )}
-      </div>
+            </div>
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="px-4 py-2 border rounded-lg text-sm font-semibold disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="px-4 py-2 border rounded-lg text-sm font-semibold disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </main>
   );
 };
@@ -344,6 +369,8 @@ export default function PaySphereDashboard() {
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState({ defaultOvertimeRate: 0, defaultDailyRate: 0 });
@@ -356,11 +383,12 @@ export default function PaySphereDashboard() {
     const fetchData = async () => {
       try {
         const [empRes, payRes] = await Promise.all([
-          api.get(`/api/employees`),
+          api.get(`/api/employees?page=${currentPage}&limit=10`),
           api.get(`/api/payroll/summary`),
         ]);
 
         setEmployees(empRes.data.employees);
+        setTotalPages(empRes.data.totalPages);
         setPayrolls(payRes.data.payrolls || []);
       } catch (err) {
         console.error("Failed to fetch data:", err);
@@ -370,7 +398,7 @@ export default function PaySphereDashboard() {
     };
     if (token) fetchData();
     else setLoading(false);
-  }, [token]);
+  }, [token,currentPage]);
 
   // Fetch settings
   useEffect(() => {
@@ -536,7 +564,7 @@ export default function PaySphereDashboard() {
             payrolls={payrolls}
           />
         ) : (
-          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls} />
+          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls}   currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage}/>
         )}
 
         {/* Settings Modal */}
