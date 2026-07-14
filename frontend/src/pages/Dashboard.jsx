@@ -7,7 +7,6 @@ import api from "../services/api";
 
 
 // --- Dashboard Component ---
-// --- Dashboard Component ---
 const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpdate, onAddEmployee, totalPayout, employeeCount, loading, payrolls }) => {
   // Build a map from employeeId to payroll data
   const payrollMap = {};
@@ -175,7 +174,7 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
 const AVATAR_COLORS = ["#6366F1", "#EC4899", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6"];
 
 // --- Employees Component ---
-const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, payrolls,currentPage,totalPages,setCurrentPage }) => {
+const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, payrolls, currentPage, totalPages, setCurrentPage }) => {
   const fmt = (n) => "₹" + Math.abs(n).toLocaleString("en-IN");
 
   // Build a map from employeeId to payroll data
@@ -332,7 +331,7 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, pa
             </p>
           </div>
         )}
-            </div>
+      </div>
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
@@ -370,7 +369,7 @@ export default function PaySphereDashboard() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState({ defaultOvertimeRate: 0, defaultDailyRate: 0 });
@@ -398,7 +397,7 @@ const [totalPages, setTotalPages] = useState(1);
     };
     if (token) fetchData();
     else setLoading(false);
-  }, [token,currentPage]);
+  }, [token, currentPage]);
 
   // Fetch settings
   useEffect(() => {
@@ -564,12 +563,12 @@ const [totalPages, setTotalPages] = useState(1);
             payrolls={payrolls}
           />
         ) : (
-          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls}   currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage}/>
+          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls} currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage}/>
         )}
 
         {/* Settings Modal */}
         {showSettings && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }} onClick={() => setShowSettings(false)}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifycontent: "center", zIndex: 100, backdropFilter: "blur(4px)" }} onClick={() => setShowSettings(false)}>
             <div style={{ background: "white", borderRadius: 20, width: "92%", maxWidth: 450, padding: 0, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: "28px 28px 20px", borderBottom: "1.5px solid #F0F1F3" }}>
                 <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: 0 }}>Payroll Settings</h2>
