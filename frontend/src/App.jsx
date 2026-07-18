@@ -9,7 +9,7 @@ import MonthlyUpdates from "./pages/MonthlyUpdates"
 import AddEmployee from "./pages/AddEmployee"
 import ResetPassword from "./pages/ResetPassword"
 import NotFound from "./pages/NotFound"
-
+import ScrollToTop from "./components/common/ScrollToTop"
 function App() {
   const themeMode = useSelector((state) => state.ui.themeMode);
 
@@ -50,9 +50,9 @@ function App() {
           <Route path="/add-employee" element={<AddEmployee />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
+</Routes>
+        <ScrollToTop />
+      </BrowserRouter>    </ThemeProvider>
   )
 }
 
