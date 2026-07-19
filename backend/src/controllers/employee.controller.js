@@ -36,16 +36,24 @@ exports.getEmployees = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
 
     const skip = (page - 1) * limit;
 
-    const totalEmployees = await Employee.countDocuments({
+    const query = {
       createdBy: req.userId,
-    });
+    };
 
-    const employees = await Employee.find({
-      createdBy: req.userId,
-    })
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { role: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const totalEmployees = await Employee.countDocuments(query);
+
+    const employees = await Employee.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
