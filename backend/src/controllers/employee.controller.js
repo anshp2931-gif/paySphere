@@ -105,69 +105,76 @@ exports.importEmployees = async (req, res) => {
         trim: true,
       },
       async (err, records) => {
-        if (err) {
-          return res.status(400).json({
-            message: "Invalid CSV format",
+        try {
+          if (err) {
+            return res.status(400).json({
+              message: "Invalid CSV format",
+            });
+          }
+
+          const employees = [];
+          const errors = [];
+          let skipped = 0;
+
+          records.forEach((record, index) => {
+            const fullName = record.fullName?.trim();
+            const role = record.role?.trim() || "";
+            const monthlySalary = Number(record.monthlySalary);
+            const overtimeRate = Number(record.overtimeRate || 0);
+
+            if (!fullName) {
+              skipped++;
+              errors.push({
+                row: index + 2,
+                reason: "Full name is required",
+              });
+              return;
+            }
+
+            if (isNaN(monthlySalary) || monthlySalary <= 0) {
+              skipped++;
+              errors.push({
+                row: index + 2,
+                reason: "Invalid monthly salary",
+              });
+              return;
+            }
+
+            if (isNaN(overtimeRate) || overtimeRate < 0) {
+              skipped++;
+              errors.push({
+                row: index + 2,
+                reason: "Invalid overtime rate",
+              });
+              return;
+            }
+
+            employees.push({
+              fullName,
+              role,
+              monthlySalary,
+              overtimeRate,
+              companyName: user.companyName,
+              createdBy: req.userId,
+            });
+          });
+
+          if (employees.length > 0) {
+            await Employee.insertMany(employees);
+          }
+
+          return res.status(200).json({
+            message: "Employee import completed",
+            imported: employees.length,
+            skipped,
+            errors,
+          });
+        } catch (dbError) {
+          return res.status(500).json({
+            message: "Server error during employee import",
+            error: dbError.message,
           });
         }
-
-        const employees = [];
-        const errors = [];
-        let skipped = 0;
-
-        records.forEach((record, index) => {
-          const fullName = record.fullName?.trim();
-          const role = record.role?.trim() || "";
-          const monthlySalary = Number(record.monthlySalary);
-          const overtimeRate = Number(record.overtimeRate || 0);
-
-          if (!fullName) {
-            skipped++;
-            errors.push({
-              row: index + 2,
-              reason: "Full name is required",
-            });
-            return;
-          }
-
-          if (isNaN(monthlySalary) || monthlySalary <= 0) {
-            skipped++;
-            errors.push({
-              row: index + 2,
-              reason: "Invalid monthly salary",
-            });
-            return;
-          }
-
-          if (isNaN(overtimeRate) || overtimeRate < 0) {
-            skipped++;
-            errors.push({
-              row: index + 2,
-              reason: "Invalid overtime rate",
-            });
-            return;
-          }
-
-          employees.push({
-            fullName,
-            role,
-            monthlySalary,
-            overtimeRate,
-            companyName: user.companyName,
-            createdBy: req.userId,
-          });
-        });
-
-        if (employees.length > 0) {
-          await Employee.insertMany(employees);
-        }
-
-        return res.status(200).json({
-          message: "Employee import completed",
-          imported: employees.length,
-          skipped,
-          errors,
-        });
       }
     );
   } catch (error) {
