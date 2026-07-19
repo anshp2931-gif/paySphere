@@ -6,8 +6,8 @@ exports.addEmployee = async (req, res) => {
   try {
     const { fullName, role, monthlySalary, overtimeRate } = req.body;
 
-    if (!fullName || !monthlySalary) {
-      return res.status(400).json({ message: "Full name and monthly salary are required" });
+    if (!fullName || !role || !monthlySalary) {
+      return res.status(400).json({ message: "Full name, role, and monthly salary are required" });
     }
 
     // Get the user's company name
@@ -16,7 +16,7 @@ exports.addEmployee = async (req, res) => {
 
     const employee = new Employee({
       fullName,
-      role: role || "",
+      role,
       monthlySalary,
       overtimeRate: overtimeRate || 0,
       companyName: user.companyName,
@@ -118,7 +118,7 @@ exports.importEmployees = async (req, res) => {
 
           records.forEach((record, index) => {
             const fullName = record.fullName?.trim();
-            const role = record.role?.trim() || "";
+            const role = record.role?.trim();
             const monthlySalary = Number(record.monthlySalary);
             const overtimeRate = Number(record.overtimeRate || 0);
 
@@ -127,6 +127,15 @@ exports.importEmployees = async (req, res) => {
               errors.push({
                 row: index + 2,
                 reason: "Full name is required",
+              });
+              return;
+            }
+
+            if (!role) {
+              skipped++;
+              errors.push({
+                row: index + 2,
+                reason: "Role is required",
               });
               return;
             }
