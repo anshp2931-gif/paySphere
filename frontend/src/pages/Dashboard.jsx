@@ -259,7 +259,7 @@ const DashboardOverview = ({
         {!loading && (filtered.length > 0 || search) && (
           <div
             onClick={onAddEmployee}
-            className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-45 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
+            className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-44 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
             <p className="text-gray-400 dark:text-slate-400 font-semibold">
               + Add Employee
@@ -517,7 +517,7 @@ const EmployeeManagement = ({
         {!loading && employees.length > 0 && (
           <div
             onClick={onAddEmployee}
-            className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-50 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
+            className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-48 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
             <p className="text-gray-400 dark:text-slate-400 font-semibold">
               + Add more employees
