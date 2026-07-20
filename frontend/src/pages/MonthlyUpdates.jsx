@@ -423,7 +423,7 @@ export default function MonthlyUpdates() {
         <header style={{
           background: isDark ? "#111827" : "white", borderBottom: isDark ? "1.5px solid #1e293b" : "1.5px solid #F0F1F3",
           padding:"0 20px", height:62,
-          display:"flex", alignItems:"center", justifycontent:"space-between", justifyContent:"space-between",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
           position:"sticky", top:0, zIndex:9,
           transition: "background-color 0.2s, border-color 0.2s"
         }}>
@@ -540,7 +540,7 @@ export default function MonthlyUpdates() {
 
           {/* Recent Activity */}
           <div style={{ width:"100%", maxWidth:760 }}>
-            <div style={{ display:"flex", justifycontent:"space-between", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
               <span style={{ fontSize:11.5, fontWeight:700, color: isDark ? "#cbd5e1" : "#9CA3AF", letterSpacing:"0.08em", textTransform:"uppercase" }}>
                 Recent Activity
               </span>
@@ -657,7 +657,7 @@ export default function MonthlyUpdates() {
             transition: "background-color 0.2s, border-color 0.2s"
           }}>
             <div className="bottom-cta-inner" style={{
-              display:"flex", alignItems:"center", justifycontent:"space-between", justifyContent:"space-between",
+              display:"flex", alignItems:"center", justifyContent:"space-between",
               width:"100%", maxWidth:760,
             }}>
               <div>
@@ -754,7 +754,7 @@ export default function MonthlyUpdates() {
               <div className="modal-box" onClick={e => e.stopPropagation()}>
                 {/* Modal Header */}
                 <div style={{ padding:"28px 28px 20px", borderBottom: isDark ? "1.5px solid #1e293b" : "1.5px solid #F0F1F3" }}>
-                  <div style={{ display:"flex", alignItems:"center", justifycontent:"space-between", justifyContent:"space-between", marginBottom:8 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
                     <h2 style={{
                       fontFamily:"'DM Serif Display',serif",
                       fontSize:24, fontWeight:400, color: isDark ? "white" : "#111827",
