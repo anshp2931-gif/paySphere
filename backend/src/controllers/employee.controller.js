@@ -2,7 +2,7 @@ const Employee = require("../models/employee.model");
 const User = require("../models/user.model");
 const { parse } = require("csv-parse");
 const { isNonEmptyString } = require("../utils/validators");
-
+const PayrollUpdate = require("../models/payroll.model");
 // ADD EMPLOYEE
 exports.addEmployee = async (req, res) => {
   try {
@@ -285,4 +285,47 @@ exports.updateEmployee = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
+
+
+// DELETE EMPLOYEE
+exports.deleteEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const employee = await Employee.findById(id);
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    // Check ownership
+    if (employee.createdBy.toString() !== req.userId) {
+      return res.status(403).json({
+        message: "Not authorized to delete this employee",
+      });
+    }
+
+    // Delete related payroll records
+    await PayrollUpdate.deleteMany({
+      employeeId: id,
+      createdBy: req.userId,
+    });
+
+    // Delete employee
+    await Employee.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: "Employee and payroll records deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete employee error:", error);
+
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
