@@ -120,6 +120,12 @@ exports.importEmployees = async (req, res) => {
             });
           }
 
+          // Fetch existing employees to detect duplicates by fullName + role
+          const existingEmployees = await Employee.find({ createdBy: req.userId });
+          const existingKeys = new Set(
+            existingEmployees.map(e => `${e.fullName.toLowerCase()}|${e.role.toLowerCase()}`)
+          );
+
           const employees = [];
           const errors = [];
           let skipped = 0;
@@ -165,6 +171,20 @@ exports.importEmployees = async (req, res) => {
               });
               return;
             }
+
+            // Check for duplicate by fullName + role (case-insensitive)
+            const key = `${fullName.toLowerCase()}|${role.toLowerCase()}`;
+            if (existingKeys.has(key)) {
+              skipped++;
+              errors.push({
+                row: index + 2,
+                reason: "Duplicate employee (same name and role already exists)",
+              });
+              return;
+            }
+
+            // Also prevent duplicates within the same CSV batch
+            existingKeys.add(key);
 
             employees.push({
               fullName,
