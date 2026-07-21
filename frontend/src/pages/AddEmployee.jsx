@@ -295,7 +295,7 @@ export default function AddEmployee() {
             </button>
             <span className="font-bold text-blue-900 dark:text-blue-400 truncate">Ledger Payroll</span>
             <button className="hidden sm:block text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 whitespace-nowrap">
-              April 2026
+              {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
             </button>
           </div>
 
@@ -502,7 +502,7 @@ export default function AddEmployee() {
                   <div>
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm">Recently Added</h3>
                     <p className="text-xs text-gray-400 dark:text-slate-450 mt-0.5 leading-relaxed">
-                      Employees added here will automatically appear in your April 2026 payroll worksheet.
+                      Employees added here will automatically appear in your {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} payroll worksheet.
                     </p>
                   </div>
                 </div>

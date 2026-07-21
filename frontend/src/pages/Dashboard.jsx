@@ -80,7 +80,7 @@ const DashboardOverview = ({
             Monthly Overview
           </p>
           <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white">
-            April 2026
+            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
           </h1>
         </div>
 
@@ -758,7 +758,7 @@ export default function PaySphereDashboard() {
               Ledger Payroll
             </span>
             <button className="hidden sm:block text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 whitespace-nowrap">
-              April 2026
+              {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
             </button>
           </div>
 

@@ -418,7 +418,7 @@ export default function MonthlyUpdates() {
               background:"none", border:"none", fontFamily:"'DM Sans',sans-serif",
               fontSize:14.5, fontWeight:700, color: isDark ? "#3b82f6" : "#2563EB", cursor:"pointer",
               borderBottom: isDark ? "2px solid #3b82f6" : "2px solid #2563EB", paddingBottom:2,
-            }} className="sm:flex">April 2026 <ChevronDown /></button>
+            }} className="sm:flex">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} <ChevronDown /></button>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <ThemeToggle />
