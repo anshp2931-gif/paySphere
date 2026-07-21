@@ -32,9 +32,6 @@ const DashboardOverview = ({
   });
 
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   const [gettingStarted, setGettingStarted] = useState(() => {
     return localStorage.getItem('showGettingStartedCard') !== 'false';
   });
@@ -295,9 +292,6 @@ const EmployeeManagement = ({
   setCurrentPage,
 }) => {
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   // Build a map from employeeId to payroll data
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
@@ -556,9 +550,6 @@ const EmployeeManagement = ({
 
 export default function PaySphereDashboard() {
   const navigate = useNavigate();
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   const [activePage, setActivePage] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -567,12 +558,6 @@ export default function PaySphereDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState({
-    defaultOvertimeRate: 0,
-    defaultDailyRate: 0,
-  });
-  const [updatingSettings, setUpdatingSettings] = useState(false);
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
   const token = localStorage.getItem('token');
 
@@ -595,33 +580,8 @@ export default function PaySphereDashboard() {
       }
     };
     if (token) fetchData();
-    else setLoading(false);
+    else setTimeout(() => setLoading(false), 0);
   }, [token, currentPage]);
-
-  // Fetch settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await api.get(`/api/auth/settings`);
-        setSettings(res.data);
-      } catch (err) {
-        console.error('Failed to fetch settings:', err);
-      }
-    };
-    if (token) fetchSettings();
-  }, [token]);
-
-  const saveSettings = async () => {
-    setUpdatingSettings(true);
-    try {
-      await api.put(`/api/auth/settings`, settings);
-      setShowSettings(false);
-    } catch (err) {
-      alert('Failed to save settings');
-    } finally {
-      setUpdatingSettings(false);
-    }
-  };
 
   const payrollMap = {};
   payrolls.forEach((p) => {
@@ -696,12 +656,12 @@ export default function PaySphereDashboard() {
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
-          {['Dashboard', 'Employees', 'Payroll Settings'].map((item) => (
+          {['Dashboard', 'Employees', 'Settings'].map((item) => (
             <button
               key={item}
               onClick={() => {
-                if (item === 'Payroll Settings') {
-                  setShowSettings(true);
+                if (item === 'Settings') {
+                  navigate('/settings');
                 } else {
                   setActivePage(item);
                 }
@@ -792,191 +752,6 @@ export default function PaySphereDashboard() {
           />
         )}
 
-        {/* Settings Modal */}
-        {showSettings && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100,
-              backdropFilter: 'blur(4px)',
-            }}
-            onClick={() => setShowSettings(false)}
-          >
-            <div
-              style={{
-                background: isDark ? '#1e293b' : 'white',
-                borderRadius: 20,
-                width: '92%',
-                maxWidth: 450,
-                padding: 0,
-                overflow: 'hidden',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-                border: isDark ? '1.5px solid #334155' : 'none',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  padding: '28px 28px 20px',
-                  borderBottom: isDark
-                    ? '1.5px solid #334155'
-                    : '1.5px solid #F0F1F3',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: isDark ? 'white' : '#111827',
-                    margin: 0,
-                  }}
-                >
-                  Payroll Settings
-                </h2>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: isDark ? '#94a3b8' : '#6B7280',
-                    margin: '8px 0 0',
-                  }}
-                >
-                  Set default rates for all employees.
-                </p>
-              </div>
-
-              <div style={{ padding: '24px 28px' }}>
-                <label style={{ display: 'block', marginBottom: 20 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: isDark ? '#94a3b8' : '#9CA3AF',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 8,
-                      display: 'block',
-                    }}
-                  >
-                    Default Overtime Rate (₹ / hr)
-                  </span>
-                  <input
-                    type="number"
-                    value={settings.defaultOvertimeRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        defaultOvertimeRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      background: isDark ? '#0f172a' : '#F3F4F6',
-                      border: isDark
-                        ? '1.5px solid #334155'
-                        : '1.5px solid transparent',
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: isDark ? 'white' : '#111827',
-                      outline: 'none',
-                    }}
-                  />
-                </label>
-
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: isDark ? '#94a3b8' : '#9CA3AF',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 8,
-                      display: 'block',
-                    }}
-                  >
-                    Default Daily Deduction (₹ / day)
-                  </span>
-                  <input
-                    type="number"
-                    value={settings.defaultDailyRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        defaultDailyRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      background: isDark ? '#0f172a' : '#F3F4F6',
-                      border: isDark
-                        ? '1.5px solid #334155'
-                        : '1.5px solid transparent',
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: isDark ? 'white' : '#111827',
-                      outline: 'none',
-                    }}
-                  />
-                </label>
-              </div>
-
-              <div
-                style={{
-                  padding: '16px 28px 24px',
-                  borderTop: isDark
-                    ? '1.5px solid #334155'
-                    : '1.5px solid #F0F1F3',
-                  display: 'flex',
-                  gap: 12,
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <button
-                  onClick={() => setShowSettings(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 10,
-                    border: isDark
-                      ? '1.5px solid #334155'
-                      : '1.5px solid #E5E7EB',
-                    background: isDark ? '#1e293b' : 'white',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: isDark ? '#cbd5e1' : '#374151',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveSettings}
-                  disabled={updatingSettings}
-                  style={{
-                    padding: '10px 24px',
-                    borderRadius: 10,
-                    border: 'none',
-                    background: '#2563EB',
-                    color: 'white',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: updatingSettings ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {updatingSettings ? 'Saving...' : 'Save Settings'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
