@@ -5,6 +5,7 @@ const { OAuth2Client } = require("google-auth-library");
 const crypto = require("crypto");
 const User = require("../models/user.model");
 const Employee = require("../models/employee.model");
+const PayrollUpdate = require("../models/payroll.model");
 const { sendEmail } = require("../utils/email");
 const { isNonEmptyString, isValidEmail } = require("../utils/validators");
 
@@ -358,9 +359,13 @@ exports.deleteAccount = async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Cascading deletes to prevent orphaned records
+    await Employee.deleteMany({ createdBy: req.userId });
+    await PayrollUpdate.deleteMany({ createdBy: req.userId });
+    
     await User.findByIdAndDelete(req.userId);
 
-    res.status(200).json({ message: "Account deleted successfully." });
+    res.status(200).json({ message: "Account and associated data deleted successfully." });
   } catch (error) {
     console.error("DELETE ACCOUNT ERROR:", error);
     res.status(500).json({ message: "Server error", error: error.message });
