@@ -36,7 +36,9 @@ const downloadFile = (url, filename) => {
     })
     .catch((err) => {
       console.error('Export failed:', err);
-      alert('No payroll data found for the current month. Finalize payroll first.');
+      alert(
+        'No payroll data found for the current month. Finalize payroll first.',
+      );
     });
 };
 
@@ -78,7 +80,10 @@ const DashboardOverview = ({
             Monthly Overview
           </p>
           <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white">
-            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            {new Date().toLocaleString('default', {
+              month: 'long',
+              year: 'numeric',
+            })}
           </h1>
         </div>
 
@@ -88,7 +93,9 @@ const DashboardOverview = ({
           </button>
 
           <button
-            onClick={() => downloadFile('/api/payroll/export-csv', `payroll-export.csv`)}
+            onClick={() =>
+              downloadFile('/api/payroll/export-csv', `payroll-export.csv`)
+            }
             className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors"
           >
             Export CSV
@@ -115,15 +122,27 @@ const DashboardOverview = ({
         ) : (
           <>
             <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">Total Monthly Payout</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">₹{totalPayout.toLocaleString('en-IN')}</h2>
-              <p className="text-gray-400 dark:text-slate-400 text-sm mt-2">{employeeCount} employees on payroll</p>
+              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">
+                Total Monthly Payout
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                ₹{totalPayout.toLocaleString('en-IN')}
+              </h2>
+              <p className="text-gray-400 dark:text-slate-400 text-sm mt-2">
+                {employeeCount} employees on payroll
+              </p>
             </div>
 
             <div className="w-full sm:w-64 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">Employees</p>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">{employeeCount}</h2>
-              <p className="text-gray-400 dark:text-slate-400 text-sm">Active this month</p>
+              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">
+                Employees
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+                {employeeCount}
+              </h2>
+              <p className="text-gray-400 dark:text-slate-400 text-sm">
+                Active this month
+              </p>
             </div>
           </>
         )}
@@ -141,8 +160,13 @@ const DashboardOverview = ({
             ✕
           </button>
 
-          <h2 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">Getting Started</h2>
-          <p className="text-gray-600 dark:text-slate-400">New to PaySphere? Watch this quick tutorial to learn how to navigate the application and get started.</p>
+          <h2 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">
+            Getting Started
+          </h2>
+          <p className="text-gray-600 dark:text-slate-400">
+            New to PaySphere? Watch this quick tutorial to learn how to navigate
+            the application and get started.
+          </p>
 
           <a
             href="https://youtu.be/N3SizOsiNGw"
@@ -157,7 +181,9 @@ const DashboardOverview = ({
 
       {/* Search + Export Roster */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Employee Directory</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Employee Directory
+        </h2>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <input
@@ -170,8 +196,16 @@ const DashboardOverview = ({
           <button
             type="button"
             disabled={loading || filtered.length === 0}
-            onClick={() => exportEmployeesToCsv(filtered, { companyName: localStorage.getItem('companyName') || 'PaySphere' })}
-            title={filtered.length === 0 ? 'No employees to export' : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`}
+            onClick={() =>
+              exportEmployeesToCsv(filtered, {
+                companyName: localStorage.getItem('companyName') || 'PaySphere',
+              })
+            }
+            title={
+              filtered.length === 0
+                ? 'No employees to export'
+                : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`
+            }
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
           >
             <DownloadIcon sx={{ fontSize: 18 }} />
@@ -183,19 +217,27 @@ const DashboardOverview = ({
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          Array.from({ length: 6 }).map((_, i) => <EmployeeCardSkeleton key={i} />)
+          Array.from({ length: 6 }).map((_, i) => (
+            <EmployeeCardSkeleton key={i} />
+          ))
         ) : filtered.length === 0 && !search ? (
           <EmptyState
             title="No employees yet"
             description="Add your first employee to get started with payroll."
             action={
-              <button onClick={onAddEmployee} className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none">
+              <button
+                onClick={onAddEmployee}
+                className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
+              >
                 + Add Employee
               </button>
             }
           />
         ) : filtered.length === 0 && search ? (
-          <EmptyState title="No employees found" description={`No employees match "${search}". Try a different name or role.`} />
+          <EmptyState
+            title="No employees found"
+            description={`No employees match "${search}". Try a different name or role.`}
+          />
         ) : (
           filtered.map((emp) => (
             <EmployeeCard
@@ -213,7 +255,9 @@ const DashboardOverview = ({
             onClick={onAddEmployee}
             className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-44 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
-            <p className="text-gray-400 dark:text-slate-400 font-semibold">+ Add Employee</p>
+            <p className="text-gray-400 dark:text-slate-400 font-semibold">
+              + Add Employee
+            </p>
           </div>
         )}
       </div>
@@ -233,7 +277,6 @@ const EmployeeManagement = ({
   setCurrentPage,
   onDeleteEmployee,
 }) => {
-  const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
     payrollMap[p.employeeId] = p;
@@ -252,8 +295,12 @@ const EmployeeManagement = ({
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 mb-4">
             Payroll done in 30 seconds
           </span>
-          <p className="text-sm text-gray-400 dark:text-slate-400 mb-1">Final Summary</p>
-          <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white mb-2">₹{totalNet.toLocaleString('en-IN')}</h1>
+          <p className="text-sm text-gray-400 dark:text-slate-400 mb-1">
+            Final Summary
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white mb-2">
+            ₹{totalNet.toLocaleString('en-IN')}
+          </h1>
           <p className="text-sm text-gray-400 dark:text-slate-400">
             Total Monthly Payout for{' '}
             <span className="text-gray-700 dark:text-slate-200 font-semibold">
@@ -278,13 +325,18 @@ const EmployeeManagement = ({
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          Array.from({ length: 6 }).map((_, i) => <EmployeeBreakdownSkeleton key={i} />)
+          Array.from({ length: 6 }).map((_, i) => (
+            <EmployeeBreakdownSkeleton key={i} />
+          ))
         ) : employees.length === 0 ? (
           <EmptyState
             title="No employees yet"
             description="Add employees to see their salary breakdown here."
             action={
-              <button onClick={onAddEmployee} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none">
+              <button
+                onClick={onAddEmployee}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
+              >
                 + Add Employee
               </button>
             }
@@ -306,7 +358,9 @@ const EmployeeManagement = ({
             onClick={onAddEmployee}
             className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-48 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
-            <p className="text-gray-400 dark:text-slate-400 font-semibold">+ Add more employees</p>
+            <p className="text-gray-400 dark:text-slate-400 font-semibold">
+              + Add more employees
+            </p>
           </div>
         )}
       </div>
@@ -398,20 +452,17 @@ export default function PaySphereDashboard() {
       await api.delete(`/api/employees/${employeeToDelete._id}`);
 
       setEmployees((prev) =>
-        prev.filter((emp) => emp._id !== employeeToDelete._id)
+        prev.filter((emp) => emp._id !== employeeToDelete._id),
       );
 
       setPayrolls((prev) =>
-        prev.filter(
-          (p) => p.employeeId !== employeeToDelete._id
-        )
+        prev.filter((p) => p.employeeId !== employeeToDelete._id),
       );
 
       setEmployeeToDelete(null);
-
     } catch (error) {
-      console.error("Delete failed:", error);
-      alert("Failed to delete employee");
+      console.error('Delete failed:', error);
+      alert('Failed to delete employee');
     } finally {
       setDeleting(false);
     }
@@ -428,9 +479,14 @@ export default function PaySphereDashboard() {
     <div className="min-h-screen bg-gray-100 dark:bg-slate-950 flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-200">
       <Helmet>
         <title>
-          {activePage === 'Dashboard' ? 'Payroll Dashboard | PaySphere' : 'Employee Management | PaySphere'}
+          {activePage === 'Dashboard'
+            ? 'Payroll Dashboard | PaySphere'
+            : 'Employee Management | PaySphere'}
         </title>
-        <meta name="description" content={`Manage ${companyName}'s payroll and employees with ease.`} />
+        <meta
+          name="description"
+          content={`Manage ${companyName}'s payroll and employees with ease.`}
+        />
       </Helmet>
 
       {/* Sidebar (extracted component) */}
@@ -453,9 +509,14 @@ export default function PaySphereDashboard() {
             >
               ☰
             </button>
-            <span className="font-bold text-blue-900 dark:text-blue-400 truncate">Ledger Payroll</span>
+            <span className="font-bold text-blue-900 dark:text-blue-400 truncate">
+              Ledger Payroll
+            </span>
             <button className="hidden sm:block text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 whitespace-nowrap">
-              {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+              {new Date().toLocaleString('default', {
+                month: 'long',
+                year: 'numeric',
+              })}
             </button>
           </div>
 
@@ -504,19 +565,16 @@ export default function PaySphereDashboard() {
           />
         )}
 
-
         {/* Delete Confirmation Modal */}
         {employeeToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-
             <div className="bg-white dark:bg-slate-900 rounded-xl p-6 w-96 shadow-xl">
-
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Delete Employee?
               </h2>
 
               <p className="mt-3 text-gray-600 dark:text-slate-400">
-                Are you sure you want to delete{" "}
+                Are you sure you want to delete{' '}
                 <span className="font-semibold">
                   {employeeToDelete.fullName}
                 </span>
@@ -526,7 +584,6 @@ export default function PaySphereDashboard() {
               </p>
 
               <div className="flex justify-end gap-3 mt-6">
-
                 <button
                   onClick={() => setEmployeeToDelete(null)}
                   className="px-4 py-2 border rounded-lg"
@@ -539,13 +596,10 @@ export default function PaySphereDashboard() {
                   onClick={handleDeleteEmployee}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg"
                 >
-                  {deleting ? "Deleting..." : "Delete"}
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </button>
-
               </div>
-
             </div>
-
           </div>
         )}
       </div>
@@ -553,8 +607,13 @@ export default function PaySphereDashboard() {
       {/* Settings modal (extracted component).
           Kept for future use; not wired to a trigger today, so
           no visual change occurs. */}
-      <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}>
-        <p className="text-sm text-gray-500 dark:text-slate-400">Settings will be available here soon.</p>
+      <SettingsModal
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      >
+        <p className="text-sm text-gray-500 dark:text-slate-400">
+          Settings will be available here soon.
+        </p>
       </SettingsModal>
     </div>
   );
