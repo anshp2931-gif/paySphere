@@ -284,4 +284,4 @@ exports.sendPayslipEmailHandler = async (req, res) => {
     console.error("Manual email error:", error);
     res.status(500).json({ message: "Server error while sending email", error: error.message });
   }
-};
+}

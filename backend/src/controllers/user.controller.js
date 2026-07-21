@@ -10,6 +10,7 @@ const { sendEmail } = require("../utils/email");
 const { isNonEmptyString, isValidEmail } = require("../utils/validators");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
 // SIGN UP
 exports.signup = async (req, res) => {
@@ -24,8 +25,8 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address format" });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -314,8 +315,8 @@ exports.resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    if (!isNonEmptyString(password) || password.length < 6) {
-      return res.status(400).json({ message: "New password must be a string with at least 6 characters" });
+    if (!isNonEmptyString(password) || !passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
