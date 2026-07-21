@@ -1,9 +1,8 @@
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import ThemeToggle from '../components/ThemeToggle';
 import EmptyState from '../components/common/EmptyState';
 import {
@@ -251,10 +250,10 @@ const DashboardOverview = ({
                       style={{
                         backgroundColor:
                           AVATAR_COLORS[
-                            emp.fullName
-                              .split('')
-                              .reduce((a, c) => a + c.charCodeAt(0), 0) %
-                              AVATAR_COLORS.length
+                          emp.fullName
+                            .split('')
+                            .reduce((a, c) => a + c.charCodeAt(0), 0) %
+                          AVATAR_COLORS.length
                           ],
                       }}
                     >
@@ -345,6 +344,7 @@ const EmployeeManagement = ({
   currentPage,
   totalPages,
   setCurrentPage,
+  onDeleteEmployee,
 }) => {
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
   // Build a map from employeeId to payroll data
@@ -441,10 +441,10 @@ const EmployeeManagement = ({
                       style={{
                         backgroundColor:
                           AVATAR_COLORS[
-                            emp.fullName
-                              .split('')
-                              .reduce((a, c) => a + c.charCodeAt(0), 0) %
-                              AVATAR_COLORS.length
+                          emp.fullName
+                            .split('')
+                            .reduce((a, c) => a + c.charCodeAt(0), 0) %
+                          AVATAR_COLORS.length
                           ],
                       }}
                     >
@@ -557,6 +557,12 @@ const EmployeeManagement = ({
                     {fmt(p ? p.netSalary : emp.monthlySalary)}
                   </span>
                 </div>
+                <button
+                  onClick={() => onDeleteEmployee(emp)}
+                  className="mt-4 w-full py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400"
+                >
+                  Delete Employee
+                </button>
               </div>
             );
           })
@@ -613,6 +619,8 @@ export default function PaySphereDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
   const token = localStorage.getItem('token');
 
@@ -653,7 +661,33 @@ export default function PaySphereDashboard() {
       e.fullName.toLowerCase().includes(search.toLowerCase()) ||
       (e.role || '').toLowerCase().includes(search.toLowerCase()),
   );
+  const handleDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
 
+    try {
+      setDeleting(true);
+
+      await api.delete(`/api/employees/${employeeToDelete._id}`);
+
+      setEmployees((prev) =>
+        prev.filter((emp) => emp._id !== employeeToDelete._id)
+      );
+
+      setPayrolls((prev) =>
+        prev.filter(
+          (p) => p.employeeId !== employeeToDelete._id
+        )
+      );
+
+      setEmployeeToDelete(null);
+
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete employee");
+    } finally {
+      setDeleting(false);
+    }
+  };
   const getInitials = (name) =>
     name
       .split(' ')
@@ -722,11 +756,10 @@ export default function PaySphereDashboard() {
                 }
                 setIsSidebarOpen(false);
               }}
-              className={`w-full flex cursor-pointer items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
-                activePage === item
+              className={`w-full flex cursor-pointer items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${activePage === item
                   ? 'bg-indigo-50 dark:bg-indigo-950/30 text-blue-600 dark:text-blue-400 font-semibold'
                   : 'text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
-              }`}
+                }`}
             >
               {item}
             </button>
@@ -804,7 +837,52 @@ export default function PaySphereDashboard() {
             currentPage={currentPage}
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
+            onDeleteEmployee={(emp) => setEmployeeToDelete(emp)}
           />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {employeeToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 w-96 shadow-xl">
+
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Delete Employee?
+              </h2>
+
+              <p className="mt-3 text-gray-600 dark:text-slate-400">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">
+                  {employeeToDelete.fullName}
+                </span>
+                ?
+                <br />
+                Payroll records will also be deleted.
+              </p>
+
+              <div className="flex justify-end gap-3 mt-6">
+
+                <button
+                  onClick={() => setEmployeeToDelete(null)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  disabled={deleting}
+                  onClick={handleDeleteEmployee}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                >
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
         )}
 
       </div>
