@@ -55,13 +55,15 @@ exports.finalizePayroll = async (req, res) => {
         continue;
       }
 
-      const employee = employees.find(emp =>
-        (act.employeeId && String(emp._id) === String(act.employeeId)) ||
-        (typeof act.name === "string" && emp.fullName.toLowerCase() === act.name.trim().toLowerCase())
-      );
+      if (!act.employeeId) {
+        errors.push(`employeeId is required but missing for activity involving "${act.name || 'unnamed'}"`);
+        continue;
+      }
+
+      const employee = employees.find(emp => String(emp._id) === String(act.employeeId));
 
       if (!employee) {
-        errors.push(`Could not match "${act.name || 'unnamed'}" to any employee`);
+        errors.push(`Could not find employee with ID: ${act.employeeId}`);
         continue;
       }
 
