@@ -544,10 +544,12 @@ export default function PaySphereDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalEmployees, setTotalEmployees] = useState(0);
   const [payrolls, setPayrolls] = useState([]);
   
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
@@ -559,15 +561,30 @@ export default function PaySphereDashboard() {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
+        const searchParam = debouncedSearch
+          ? `&search=${encodeURIComponent(debouncedSearch)}`
+          : '';
         const [empRes, payRes] = await Promise.all([
-          api.get(`/api/employees?page=${currentPage}&limit=10`),
+          api.get(`/api/employees?page=${currentPage}&limit=10${searchParam}`),
           api.get(`/api/payroll/summary`),
         ]);
 
         setEmployees(empRes.data.employees);
         setTotalPages(empRes.data.totalPages);
+        setTotalEmployees(empRes.data.totalEmployees || 0);
         setPayrolls(payRes.data.payrolls || []);
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -577,7 +594,7 @@ export default function PaySphereDashboard() {
     };
     if (token) fetchData();
     else setTimeout(() => setLoading(false), 0);
-  }, [token, currentPage]);
+  }, [token, currentPage, debouncedSearch]);
 
   const payrollMap = {};
   payrolls.forEach((p) => {
@@ -709,7 +726,7 @@ export default function PaySphereDashboard() {
             onAddUpdate={() => navigate('/monthly-updates')}
             onAddEmployee={() => navigate('/add-employee')}
             totalPayout={totalPayout}
-            employeeCount={employees.length}
+            employeeCount={totalEmployees}
             loading={loading}
             payrolls={payrolls}
             onEditEmployee={(emp) => setEmployeeToEdit(emp)} 
