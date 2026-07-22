@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useSelector } from "react-redux";
 import ThemeToggle from "../components/ThemeToggle";
 import api from "../services/api";
+import AttendanceCalendarModal from "../components/AttendanceCalendarModal";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const PayrollIcon = () => (
@@ -174,6 +175,11 @@ export default function MonthlyUpdates() {
   const [payrollResults, setPayrollResults] = useState(null);
   const [finalizeError, setFinalizeError] = useState("");
 
+  // Attendance Calendar Modal states (#137)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedCalendarEmp, setSelectedCalendarEmp] = useState(null);
+  const [showEmpPicker, setShowEmpPicker] = useState(false);
+
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
@@ -218,6 +224,13 @@ export default function MonthlyUpdates() {
 
   const insertTemplate = (tpl) => {
     setInput(prev => prev ? prev + tpl : "Name" + tpl);
+  };
+
+  // Handle Attendance Calendar Apply (#137)
+  const handleApplyCalendar = ({ employeeName, tags }) => {
+    const color = COLORS[nextId % COLORS.length];
+    setActivity(prev => [{ name: employeeName, tags, pending: true, id: nextId, color }, ...prev]);
+    setNextId(n => n + 1);
   };
 
   const pendingCount = activity.filter(a => a.pending).length;
@@ -504,8 +517,28 @@ export default function MonthlyUpdates() {
             ><EnterIcon /></button>
           </div>
 
-          {/* Quick action chips */}
+          {/* Quick action chips & Attendance Calendar Button */}
           <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", marginBottom:40, width:"100%", maxWidth:760 }}>
+            <button
+              className="chip-btn"
+              onClick={() => {
+                if (employees.length > 0) {
+                  setShowEmpPicker(true);
+                } else {
+                  // Fallback sample employee if empty
+                  setSelectedCalendarEmp({ fullName: "Employee 1" });
+                  setIsCalendarOpen(true);
+                }
+              }}
+              style={{
+                background: isDark ? "#1e293b" : "#EEF2FF",
+                borderColor: isDark ? "#3b82f6" : "#2563EB",
+                color: isDark ? "#60A5FA" : "#2563EB",
+                fontWeight: 700,
+              }}
+            >
+              📅 Open Attendance Calendar
+            </button>
             {QUICK_ACTIONS.map(a => (
               <button key={a.label} className="chip-btn" onClick={() => insertTemplate(a.template)}>
                 {a.icon} {a.label}
@@ -790,6 +823,76 @@ export default function MonthlyUpdates() {
               </div>
             </div>
           )}
+
+          {/* Employee Picker Modal for Calendar (#137) */}
+          {showEmpPicker && (
+            <div className="modal-overlay" onClick={() => setShowEmpPicker(false)}>
+              <div className="modal-box" onClick={e => e.stopPropagation()} style={{ padding: "24px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "6px" }}>Select Employee for Calendar</h3>
+                <p style={{ fontSize: "13.5px", color: isDark ? "#9CA3AF" : "#6B7280", marginBottom: "18px" }}>
+                  Choose an employee to open their 31-day muster roll attendance calendar grid:
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "300px", overflowY: "auto", marginBottom: "20px" }}>
+                  {employees.length === 0 ? (
+                    <div style={{ textAlign: "center", color: "#9CA3AF", padding: "16px" }}>No employees found.</div>
+                  ) : (
+                    employees.map(emp => (
+                      <button
+                        key={emp._id || emp.fullName}
+                        onClick={() => {
+                          setSelectedCalendarEmp(emp);
+                          setShowEmpPicker(false);
+                          setIsCalendarOpen(true);
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 16px",
+                          borderRadius: "12px",
+                          border: isDark ? "1px solid #1e293b" : "1px solid #E5E7EB",
+                          background: isDark ? "#111827" : "#F9FAFB",
+                          color: isDark ? "white" : "#111827",
+                          fontSize: "14.5px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        <span>👤 {emp.fullName}</span>
+                        <span style={{ fontSize: "12.5px", color: "#2563EB" }}>Select ➔</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => setShowEmpPicker(false)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "#9CA3AF",
+                      color: "white",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Attendance & Leave Calendar Modal (#137) */}
+          <AttendanceCalendarModal
+            isOpen={isCalendarOpen}
+            onClose={() => setIsCalendarOpen(false)}
+            employee={selectedCalendarEmp}
+            onApply={handleApplyCalendar}
+            isDark={isDark}
+          />
 
         </main>
       </div>
