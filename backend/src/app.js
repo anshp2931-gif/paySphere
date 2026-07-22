@@ -1,23 +1,49 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const userRoutes = require("./routes/user.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
 
 const app = express();
 
+// Security headers
+app.use(helmet());
+
 // Rate limiting trust proxy configuration
 app.set("trust proxy", 1);
+
+// CORS configuration — restrict to frontend origin
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. server-to-server, curl, mobile apps)
+    if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
 
 // Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Routes
 app.get("/", (req, res) => res.send("PaySphere API is running..."));
 app.use("/api/auth", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
+
+// CORS error handler — return 403 for blocked origins
+app.use((err, req, res, next) => {
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({ message: "CORS not allowed" });
+  }
+  next(err);
+});
 
 module.exports = app;
